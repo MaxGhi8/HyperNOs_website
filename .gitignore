@@ -1,2 +1,7 @@
 .python-version
 __pycache__/
+*.aux
+*.log
+*.fls
+*.synctex.gz
+*.fdb_latexmk

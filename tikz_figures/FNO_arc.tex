@@ -1,0 +1,77 @@
+\documentclass{standalone}
+
+\usepackage{graphicx}
+
+\usepackage{microtype}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage{tikz}
+\usetikzlibrary{positioning, arrows.meta, fit, shapes.geometric, calc}
+
+
+\begin{document}
+\begin{tikzpicture}
+    \tikzset{
+        box/.style={draw, rounded corners, align=center, minimum height=0.8cm, minimum width=1cm, fill=orange!30},
+        bigbox/.style={draw, rounded corners, align=center, minimum height=2cm, minimum width=1cm, fill=yellow!30},
+        node_sum/.style={draw, circle, fill=white, inner sep=0pt, minimum size=4mm},
+        every node/.style={font=\small}
+    }
+    % Nodes for the main structure
+    \node[box, label=above:{\textit{Input}}] (input) {$a(x)$};
+    \node[box, right=0.5cm of input, label=above:{\textit{Lifting}}] (lifting) { $\mathcal{P}$ };
+    \node[bigbox, right=0.5cm of lifting] (fourier1) {$\mathcal{L}_{1}$};
+    \node[bigbox, right=0.55cm of fourier1] (fourier2) {$\mathcal{L}_{t}$};
+    \node[bigbox, right=0.55cm of fourier2] (fourier3) {$\mathcal{L}_{L}$};
+    \node[box, right=0.5cm of fourier3, label=above:{\textit{Projection}}] (projection) {$\mathcal{Q}$};
+    \node[box, right=0.5cm of projection, label=above:{\textit{Output}}] (output) {$u(x)$};
+
+    % Draw arrows between nodes
+    \draw[-stealth, line width = .7pt] ($(input.east)+(0.05, 0)$) -- ($(lifting.west)-(0.05,0)$);
+    \draw[-stealth, line width = .7pt] ($(lifting.east)+(0.05, 0)$) -- ($(fourier1.west)-(0.03,0)$);
+    \draw[dotted, line width = 2pt] ($(fourier1.east)+(0.1, 0)$) -- ($(fourier2.west)-(0.1,0)$);
+    \draw[dotted, line width = 2pt] ($(fourier2.east)+(0.1, 0)$) -- ($(fourier3.west)-(0.1,0)$);
+    \draw[-stealth, line width = .7pt] ($(fourier3.east)+(0.05, 0)$) -- ($(projection.west)-(0.05,0)$);
+    \draw[-stealth, line width = .7pt] ($(projection.east)+(0.05, 0)$) -- ($(output.west)-(0.05,0)$);
+
+    % Annotations for the Fourier Layers
+    \node[align=center, above=0.2cm of fourier2, font=\footnotesize] { \textit{Fourier Layers} };
+
+    % Internal structure bounding box
+    \node[draw, line width = .7pt, rounded corners, inner sep=0.2cm, fit= (fourier1) (fourier2) (fourier3)] (internal) {};
+
+    %%% Second part of the plot
+    % Internal structure bounding box
+    \node[draw, below=0.2cm of internal, rounded corners, inner sep=0.2cm, fill=yellow!30] (internal) {
+        \begin{tikzpicture}[every node/.style={font=\small}]
+            % Nodes for the internal structure
+            \node[box] (vt) {$v_t(x)$};
+            \node[box, right=1cm of vt] (transform) {$\mathcal{F}$};
+            \node[box, right=0.5cm of transform, fill=green!25] (nonlinear) { $ R_{\theta_t} $ };
+            \node[box, right=0.5cm of nonlinear] (invtransform) { $ \mathcal{F}^{-1} $ };
+            \node[box, below=0.8cm of nonlinear, fill=green!25] (linear) { $ W_t, b_t $ };
+
+            % Internal structure bounding box
+            \node[draw, line width = .7pt, rounded corners, inner sep=0.15cm, fit= (transform) (nonlinear) (invtransform) ] (diagonalscaling) {};
+
+            \node[node_sum, right=0.5cm of invtransform] (node_sum) {$\mathbf{+}$};
+            \node[box, right=0.5cm of node_sum] (activation) {$\sigma$};
+            \node[box, right=0.5cm of activation] (vtplusone) {$v_{t+1}(x)$};
+
+            % Draw arrows between nodes
+            \draw[line width = .7pt] ($(vt.east)+(0.05, 0)$) -- (diagonalscaling);
+            \draw[-stealth, line width = .7pt] ($(transform.east)+(0.05, 0)$) -- ($(nonlinear.west)-(0.05, 0)$);
+            \draw[-stealth, line width = .7pt] ($(nonlinear.east)+(0.05, 0)$) -- ($(invtransform.west)-(0.05, 0)$);
+            \draw[-stealth, line width = .7pt] ($(vt.south)-(0, 0.05)$) |- ($(linear.west)-(0.05, 0)$);
+            \draw[-stealth, line width = .7pt] (diagonalscaling) -- ($(node_sum.west)-(0.05, 0)$);
+            \draw[-stealth, line width = .7pt] ($(linear.east)+(0.05, 0)$) -| ($(node_sum.south)-(0, 0.05)$);
+            \draw[-stealth, line width = .7pt] ($(node_sum.east)+(0.05, 0)$) -- ($(activation.west)-(0.05, 0)$);
+            \draw[-stealth, line width = .7pt] ($(activation.east)+(0.05, 0)$) -- ($(vtplusone.west)-(0.05, 0)$);
+
+        \end{tikzpicture}
+    };
+    % Connection between the two parts
+    \draw[] ($(internal.north west)+(0.1, 0.05)$) -- (fourier2.south west);
+    \draw[] ($(internal.north east)+(-0.1, 0.05)$) -- (fourier2.south east);
+\end{tikzpicture}
+\end{document}
