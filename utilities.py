@@ -2,40 +2,49 @@ import numpy as np
 import plotly.graph_objects as go
 import streamlit as st
 from scipy.io import loadmat
+from plotly.tools import mpl_to_plotly
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 
 @st.cache_resource
-def read_data(problem: str, str_model: str):
-
-    data = loadmat(f"data/fhn_trainL2_n_375_points_1260_tf_100_{str_model}.mat")
-    match problem:
-        case "darcy":
-            data = loadmat(f"data/fhn_trainL2_n_375_points_1260_tf_100_{str_model}.mat")
-        case "HH":
-            data = loadmat(f"data/hh_trainL2_n_375_points_1260_tf_100_{str_model}.mat")
-        case "ORD":
-            data = loadmat(
-                f"data/ord_trainL2_n_375_points_2520_tf_1000_{str_model}.mat"
-            )
-        case _:
-            raise ValueError(f"Invalid problem: {problem}")
-
-    return data
+def read_data(problem: str, model: str, hyperparams_mode: str):
+    return loadmat(
+        f"outputs_for_website/{problem}_{model}_trainL1_{hyperparams_mode}.mat"
+    )
 
 
 @st.cache_data
-def plot_input(
-    problem: str, str_model: str, attribute: str, sample_idx: int, ylabel: str = None
+def compute_relative_error(data: dict):
+    ## Compute L1 relative error
+    num_examples = data["output"].shape[0]
+    diff_norms = np.linalg.norm(
+        data["output"].reshape(num_examples, -1)
+        - data["prediction"].reshape(num_examples, -1),
+        ord=1,
+        axis=1,
+    )
+    y_norms = np.linalg.norm(data["output"].reshape(num_examples, -1), ord=1, axis=1)
+
+    # Check division by zero
+    if np.any(y_norms <= 1e-5):
+        raise ValueError("Division by zero")
+
+    relative_diff = diff_norms / y_norms
+
+    return relative_diff
+
+
+@st.cache_data
+def plot_data(
+    data,
+    sample_idx: int,
+    ylabel: str = None,
+    title: str = None,
+    big_axis: bool = False,
 ):
     """
-    problem: str
-        The name of the problem selected by the user.
-
-    str_model: str
-        The name of the model selected by the user (best, best_samedofs).
-
-    attribute: str
-        The attribute of the model to be plotted.
+    data: tensor with shape (num_samples, num_points, num_points)
 
     sample_idx: int
         The index of the sample to be plotted.
@@ -45,35 +54,44 @@ def plot_input(
 
     ylabel: str
         The label of the y-axis.
+
+    title: str
+        The title of the plot.
+
+    big_axis: bool
+        If True, the axis will be bigger 128x128 instead of 64x64.
     """
-
-    data = read_data(problem, str_model)
-
-    y_data = data[attribute][sample_idx]
-    if attribute == "input":
-        y_data = np.round(y_data, 4)
-
-    if problem == "FHN" or problem == "HH":
-        x_data = np.linspace(0, 100, len(y_data))
-    else:
-        x_data = np.linspace(0, 1000, len(y_data))
+    plot_data = data[sample_idx]
 
     fig = go.Figure()
-    fig.add_trace(
-        go.Scatter(
-            x=x_data,
-            y=y_data,
-            mode="lines",
-        )
-    )
+    fig = go.Figure(data=go.Heatmap(z=plot_data, colorscale="Viridis", showscale=True))
 
     if ylabel:
         fig.update_layout(
             yaxis_title=ylabel,
         )
 
+    if title:
+        fig.update_layout(
+            title={
+                "text": title,
+                "x": 0.45,
+                "xanchor": "center",
+            },
+        )
+
     fig.update_layout(
-        xaxis_title="Time (ms)",
+        xaxis={
+            "title": "x",
+            "tickmode": "array",
+            "tickvals": [0, 63, 127] if big_axis else [0, 32, 63],
+            "ticktext": [0, 0.5, 1],
+        },
+        yaxis={
+            "tickmode": "array",
+            "tickvals": [0, 63, 127] if big_axis else [0, 32, 63],
+            "ticktext": [0, 0.5, 1],
+        },
         font=dict(family="Arial", size=12),
         # plot_bgcolor="#f5f7fa",
         # paper_bgcolor="#ffffff",
@@ -91,115 +109,72 @@ def plot_input(
 
 
 @st.cache_data
-def plot_outputs(
-    problem: str, str_model: str, attribute: str, sample_idx: int, ylabel: str = None
+def plot_error(
+    data: dict,
+    sample_idx: int,
+    ylabel: str = None,
+    title: str = None,
+    big_axis: bool = False,
 ):
-    """
-    Same as plot_input, but with the plot of two samples overlapped.
-    """
+    error_data = np.abs(data["output"] - data["prediction"])
 
-    data = read_data(problem, str_model)
+    return plot_data(
+        error_data,
+        sample_idx,
+        ylabel=ylabel,
+        title=title,
+        big_axis=big_axis,
+    )
 
-    y_data_exact = data[f"{attribute}_exact"][sample_idx]
-    y_data_appro = data[f"{attribute}_pred"][sample_idx]
 
-    if problem == "FHN" or problem == "HH":
-        x_data = np.linspace(0, 100, len(y_data_exact))
-    else:
-        x_data = np.linspace(0, 1000, len(y_data_exact))
+@st.cache_data
+def plot_histogram(data, title: str = None):
 
+    sns.set(style="whitegrid", palette="deep")
+    plt.figure(figsize=(12, 6))
+    sns.histplot(data, bins=30, kde=True, color="skyblue", edgecolor="black")
+    plt.grid(True, which="both", linestyle="--", linewidth=0.5, alpha=0.7)
+    plt.tight_layout()
+
+    # Convert Matplotlib figure to Plotly figure
+    plotly_fig = mpl_to_plotly(plt.gcf())
     fig = go.Figure()
-    fig.add_trace(
-        go.Scatter(
-            x=x_data,
-            y=y_data_appro,
-            mode="lines",
-            line=dict(color="#9649cb"),
-            name="FNO",
-        )
-    )
-    fig.add_trace(
-        go.Scatter(
-            x=x_data,
-            y=y_data_exact,
-            mode="lines",
-            line=dict(color="#f35b04"),
-            name="Exact",
-        )
-    )
-
-    if ylabel:
-        fig.update_layout(
-            yaxis_title=ylabel,
-        )
+    for trace in plotly_fig["data"]:
+        fig.add_trace(trace)
 
     fig.update_layout(
-        xaxis_title="Time (ms)",
-        font=dict(family="Arial", size=12),
-        # plot_bgcolor="#f5f7fa",
-        # paper_bgcolor="#ffffff",
-        width=400,
-        height=300,
-        margin=dict(
-            l=20,  # left margin
-            r=20,  # right margin
-            t=55,  # top margin
-            b=20,  # bottom margin
-        ),
-        legend=dict(x=0.5, y=1.0, xanchor="center", yanchor="bottom", orientation="h"),
+        title=title,
+        xaxis_title=r"Relative L<sup>1</sup> error",
+        yaxis_title="Number of Samples",
+        template="plotly_white",
+        bargap=0.1,
+        showlegend=False,
     )
 
     return fig
 
 
 @st.cache_data
-def plot_errors(
-    problem: str, str_model: str, attribute: str, sample_idx: int, ylabel: str = None
-):
-    """
-    Same as plot_input, but with the plot of the errors between the exact solution and the approximation.
-    """
+def plot_swarmplot(data, title: str = None):
 
-    data = read_data(problem, str_model)
+    plt.figure(figsize=(4, 6))
+    sns.swarmplot(x=np.zeros(len(data)), y=data, color="skyblue", size=5)
 
-    y_data_exact = data[f"{attribute}_exact"][sample_idx]
-    y_data_appro = data[f"{attribute}_pred"][sample_idx]
-
-    if problem == "FHN" or problem == "HH":
-        x_data = np.linspace(0, 100, len(y_data_exact))
-    else:
-        x_data = np.linspace(0, 1000, len(y_data_exact))
-
+    # Convert Matplotlib figure to Plotly figure
+    plotly_fig = mpl_to_plotly(plt.gcf())
     fig = go.Figure()
-    fig.add_trace(
-        go.Scatter(
-            x=x_data,
-            y=np.abs(y_data_appro - y_data_exact),
-            mode="lines",
-            name="error",
-        )
-    )
-
-    if ylabel:
-        fig.update_layout(
-            yaxis_title=ylabel,
-        )
-
-    fig.update_yaxes(type="log")
+    for trace in plotly_fig["data"]:
+        fig.add_trace(trace)
 
     fig.update_layout(
-        xaxis_title="Time (ms)",
-        font=dict(family="Arial", size=12),
-        # plot_bgcolor="#f5f7fa",
-        # paper_bgcolor="#ffffff",
-        width=400,
-        height=300,
-        margin=dict(
-            l=20,  # left margin
-            r=20,  # right margin
-            t=30,  # top margin
-            b=20,  # bottom margin
-        ),
+        title=title,
+        xaxis={
+            "title": "Samples numerosity",
+            "tickmode": "array",
+            "tickvals": [],
+            "ticktext": [],
+        },
+        yaxis_title=r"Relative L<sup>1</sup> error",
+        template="plotly_white",
     )
-
     return fig

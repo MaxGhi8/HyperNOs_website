@@ -101,7 +101,7 @@ def main():
     #     This web application serves as an interactive visualization tool for comparing and analyzing different Ordinary Differential Equation (ODE) models commonly used in cardiac electrophysiology.
     #     The featured models include the Hodgkin-Huxley (HH) model, which describes action potential generation in neurons,
     #     the FitzHugh-Nagumno (FHN) model that is a simplification with two variables of the original HH model,
-    #     and the O'Hara-Rudy (ORD) model, which simulates with 41 variables the human ventricular cell behavior.
+    #     and the O'Hara-Rudy (ORD) model, which simulates with 42 variables the human ventricular cell behavior.
 
     #     For each mathematical model, the application provides comprehensive visualizations across multiple pages. Users can examine:
 
@@ -110,7 +110,7 @@ def main():
     #     - Error analysis showing the absolute value of the difference between true and approximate solutions, helping users understand the accuracy and limitations of different neural operator models.
 
     #     These visualizations help researchers, students, and practitioners better understand the behavior of these complex biological systems and evaluate the effectiveness of different neural operator models.
-    #     Moreover, for the OHara-Rudy model, we have 41 different and coupled variables with different behaviors, which makes very complex to analyze the behavior all in once inside an article.
+    #     Moreover, for the OHara-Rudy model, we have 42 different and coupled variables with different behaviors, which makes very complex to analyze the behavior all in once inside an article.
     #     For these reasons, we have created this web application to help the reader to understand the behavior of the model in a more interactive and comprehensive way.
     # """
     # )
