@@ -1,10 +1,10 @@
+import matplotlib.pyplot as plt
 import numpy as np
 import plotly.graph_objects as go
-import streamlit as st
-from scipy.io import loadmat
-from plotly.tools import mpl_to_plotly
 import seaborn as sns
-import matplotlib.pyplot as plt
+import streamlit as st
+from plotly.tools import mpl_to_plotly
+from scipy.io import loadmat
 
 
 @st.cache_resource
@@ -132,7 +132,7 @@ def plot_histogram(data, title: str = None):
 
     sns.set(style="whitegrid", palette="deep")
     plt.figure(figsize=(12, 6))
-    sns.histplot(data, bins=30, kde=True, color="skyblue", edgecolor="black")
+    sns.histplot(data, bins=20, kde=True, color="skyblue", edgecolor="black")
     plt.grid(True, which="both", linestyle="--", linewidth=0.5, alpha=0.7)
     plt.tight_layout()
 
