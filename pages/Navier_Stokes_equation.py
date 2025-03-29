@@ -14,7 +14,7 @@ from utilities import (
 
 
 def shear_layer_page():
-    st.title("Navier-Stockes equation benchmark", anchor=False)
+    st.title("Navier-Stokes equation benchmark", anchor=False)
 
     st.markdown(
         "This benchmark represents a non-linear PDE that models the motion of incompressible fluids, given by:"
