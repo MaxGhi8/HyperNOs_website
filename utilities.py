@@ -61,7 +61,9 @@ def plot_data(
     big_axis: bool
         If True, the axis will be bigger 128x128 instead of 64x64.
     """
-    st.cache_data.clear()
+    # to clear cache
+    # st.cache_data.clear()
+
     plot_data = data[sample_idx]
 
     fig = go.Figure()
