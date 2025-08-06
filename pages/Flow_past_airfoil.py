@@ -4,12 +4,12 @@ import streamlit as st
 
 sys.path.append("..")
 from utilities import (
-    read_data,
+    compute_relative_error,
     plot_data,
     plot_error,
-    compute_relative_error,
     plot_histogram,
     plot_swarmplot,
+    read_data,
 )
 
 
@@ -73,9 +73,9 @@ def airfoil_page():
     data = read_data("airfoil", model, hyperparams_mode.replace("_", ""))
 
     ## Plots the selected data
-    cols = st.columns(4)
+    cols = st.columns([2, 5, 1, 5, 2])
     # Plot of the input
-    with cols[0]:
+    with cols[1]:
         st.plotly_chart(
             plot_data(
                 data["input"],
@@ -88,7 +88,7 @@ def airfoil_page():
         )
 
     # Plot of the true output
-    with cols[1]:
+    with cols[3]:
         st.plotly_chart(
             plot_data(
                 data["output"],
@@ -101,7 +101,8 @@ def airfoil_page():
         )
 
     # Plot of the approximate output
-    with cols[2]:
+    cols = st.columns([2, 5, 1, 5, 2])
+    with cols[3]:
         st.plotly_chart(
             plot_data(
                 data["prediction"],
@@ -114,7 +115,7 @@ def airfoil_page():
         )
 
     # Plot of the absolute error
-    with cols[3]:
+    with cols[1]:
         st.plotly_chart(
             plot_error(
                 data,

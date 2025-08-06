@@ -66,10 +66,11 @@ def plot_data(
     fig = go.Figure()
     fig = go.Figure(data=go.Heatmap(z=plot_data, colorscale="Viridis", showscale=True))
 
-    if ylabel:
-        fig.update_layout(
-            yaxis_title=ylabel,
-        )
+    #! remove ylabel
+    # if ylabel:
+    #     fig.update_layout(
+    #         yaxis_title=ylabel,
+    #     )
 
     if title:
         fig.update_layout(
@@ -82,7 +83,7 @@ def plot_data(
 
     fig.update_layout(
         xaxis={
-            "title": "x",
+            # "title": "x", #! remove x-axis title
             "tickmode": "array",
             "tickvals": [0, 63, 127] if big_axis else [0, 32, 63],
             "ticktext": [0, 0.5, 1],
@@ -128,11 +129,11 @@ def plot_error(
 
 
 @st.cache_data
-def plot_histogram(data, title: str = None):
+def plot_histogram(data, title: str = None, bins=25):
 
     sns.set(style="whitegrid", palette="deep")
     plt.figure(figsize=(12, 6))
-    sns.histplot(data, bins=20, kde=True, color="skyblue", edgecolor="black")
+    sns.histplot(data, bins=bins, kde=True, color="skyblue", edgecolor="black")
     plt.grid(True, which="both", linestyle="--", linewidth=0.5, alpha=0.7)
     plt.tight_layout()
 
